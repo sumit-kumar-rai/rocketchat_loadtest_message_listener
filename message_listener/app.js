@@ -49,7 +49,7 @@ async function runSender(result, serverUrl, username, receiver, msgcnt, msgInter
             result.msgFail += 1;
             result.info.push(err);
 
-            process.stderr.write(err + '\n');
+            process.stderr.write(err.message + '\n');
         }).then(() => {
             result.msgDurations.push(new Date().getTime() - t1);
         });
@@ -257,7 +257,7 @@ async function runReceiver(result, serverUrl, username, sender) {
                     process.send({cmd: CMD_EXIT})
                 })
                 .catch(err => {
-                    process.stderr.write(err + '\n');
+                    process.stderr.write(err.message + '\n');
                 });
             } else if (msg.cmd === CMD_STOP_SENDER) {
                 process.stderr.write(util.format('[+] Successfully sent %s messages\n', senderResult.msgSuccess))
@@ -269,7 +269,7 @@ async function runReceiver(result, serverUrl, username, sender) {
                 process.stderr.write(util.format('[+] %s receives messages from %s\n', msg.cfg.receiver, msg.cfg.sender));
                 runReceiver(receiverResult, msg.cfg.serverUrl, msg.cfg.receiver, msg.cfg.sender)
                 .catch(err => {
-                    process.stderr.write(err + '\n');
+                    process.stderr.write(err.message + '\n');
                 });
             }
         });
