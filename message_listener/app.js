@@ -56,7 +56,7 @@ async function runSender(result, serverUrl, username, receiver, msgcnt, msgInter
     };
 
     const arr = [];
-    for (var i = 0; i < msgcnt; i++) {
+    for (var i = 1; i < msgcnt + 1; i++) {
         arr.push(i);
     }
 
@@ -66,9 +66,8 @@ async function runSender(result, serverUrl, username, receiver, msgcnt, msgInter
         // 1000 ± 500
         const interval = i * msgInterval * 1000 + Math.floor((Math.random() - 0.5) * msgIntervalJitter * 1000);
 
-        if (i > 0) {
-            await sleep(interval);
-        }
+        await sleep(interval);
+
         await sendMessage('Message ' + i, receiver)
     }));
 
