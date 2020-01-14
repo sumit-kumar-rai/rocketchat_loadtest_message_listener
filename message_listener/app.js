@@ -65,7 +65,6 @@ async function runSender(result, serverUrl, username, receiver, msgcnt, msgInter
     await Promise.all(arr.map(async (i) => {
         // 1000 ± 500
         const interval = i * msgInterval * 1000 + Math.floor((Math.random() - 0.5) * msgIntervalJitter * 1000);
-
         await sleep(interval);
 
         await sendMessage('Message ' + i, receiver)
@@ -99,7 +98,7 @@ async function runReceiver(result, serverUrl, username, sender) {
         }
 
         // filter out own message(s)
-        if (message.u._id === driver.userId) {
+        if (message.u._id === driver.userId) {
             return
         };
         
@@ -148,7 +147,7 @@ async function runReceiver(result, serverUrl, username, sender) {
     args = result.args;
 
     if (args.length != 1) {
-        process.stdout.write(util.format('Usage: %s OFFSET [options]\n', process.argv[1]))
+        process.stderr.write(util.format('Usage: %s OFFSET [options]\n', process.argv[1]))
         process.exit(2);
     }
 
@@ -160,7 +159,7 @@ async function runReceiver(result, serverUrl, username, sender) {
 
     // user data offset
     const offset = parseInt(args[0]);
-    const initialDelay = userCount * 50;
+    const initialDelay = 3000;
 
     // driver cannot handle trailing slash
     var serverUrl = opts['server-url'];
@@ -182,7 +181,7 @@ async function runReceiver(result, serverUrl, username, sender) {
         const senderJobs = [];
         const receiverJobs = [];
 
-        for (var i = 0; i < userCount; i += 2) {
+        for (var i = 0; i < userCount; i += 2) {
             configuration.sender = users[offset + i];
             configuration.receiver = users[offset + i + 1];
 
@@ -193,12 +192,11 @@ async function runReceiver(result, serverUrl, username, sender) {
             sender.send({cmd: CMD_START_SENDER, cfg: configuration})
 
             receiverJobs.push(receiver);
-            senderJobs.push(sender);
+	    senderJobs.push(sender);
         }
 
         // active sender, when 0 -> stop script
         var senderCount = senderJobs.length;
-
         for (const id in cluster.workers) {
             const worker = cluster.workers[id];
             worker.on('message', msg => {
@@ -253,17 +251,17 @@ async function runReceiver(result, serverUrl, username, sender) {
                 runSender(senderResult, msg.cfg.serverUrl, msg.cfg.sender, msg.cfg.receiver, msg.cfg.msgcnt, msg.cfg.msgInterval, msg.cfg.msgIntervalJitter, initialDelay)
                 .then(() => {
                     // request shutdown
-                    process.send({cmd: CMD_EXIT})
+		    process.send({cmd: CMD_EXIT})
                 })
                 .catch(err => {
                     process.stderr.write(err.message + '\n');
                 });
             } else if (msg.cmd === CMD_STOP_SENDER) {
                 process.stderr.write(util.format('[+] Successfully sent %s messages\n', senderResult.msgSuccess))
-                process.stdout.write(JSON.stringify(senderResult) + '\n');
+                console.log(JSON.stringify(senderResult));
             } else if (msg.cmd === CMD_STOP_RECEIVER) {
                 process.stderr.write(util.format('[+] Received %s messages\n', receiverResult.msgTotal))
-                process.stdout.write(JSON.stringify(receiverResult) + '\n');
+                console.log(JSON.stringify(receiverResult));
             } else if (msg.cmd === CMD_START_RECEIVER) {
                 process.stderr.write(util.format('[+] %s receives messages from %s\n', msg.cfg.receiver, msg.cfg.sender));
                 runReceiver(receiverResult, msg.cfg.serverUrl, msg.cfg.receiver, msg.cfg.sender)
