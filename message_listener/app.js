@@ -38,21 +38,16 @@ async function runSender(result, serverUrl, username, receiver, msgcnt, msgInter
         const msg = JSON.stringify({type: 'ping', ts: (new Date()).getTime(), msg: payload})
 
         result.msgTotal += 1;
-        await driver.sendDirectToUser(msg, receiver)
-        .then(resp => {
-            if (resp) {
-                result.msgSuccess += 1;
-            } else {
-                result.msgFail += 1;
-            }
-        }).catch(err => {
+
+        try {
+            await driver.sendDirectToUser(msg, receiver)
+            result.msgSuccess += 1;
+        } catch (err) {
             result.msgFail += 1;
             result.info.push(err);
-
             process.stderr.write(err.message + '\n');
-        }).then(() => {
-            result.msgDurations.push(new Date().getTime() - t1);
-        });
+        }
+        result.msgDurations.push(new Date().getTime() - t1);
     };
 
     const arr = [];
