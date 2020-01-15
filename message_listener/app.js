@@ -36,22 +36,24 @@ async function runSender(result, serverUrl, username, receiver, msgcnt, msgInter
     sendMessage = async(payload, receiver) => {
         const t1 = new Date().getTime();
         const msg = JSON.stringify({type: 'ping', ts: (new Date()).getTime(), msg: payload})
-
         result.msgTotal += 1;
-        await driver.sendDirectToUser(msg, receiver)
-        .then(resp => {
-            if (resp) {
-                result.msgSuccess += 1;
-            } else {
-                result.msgFail += 1;
-            }
-        }).catch(err => {
-            result.msgFail += 1;
-            result.info.push(err);
 
-            process.stderr.write(err.message + '\n');
-        }).then(() => {
+        await new Promise(resolve => {
+            setTimeout(() => {
+                result.msgFail += 1;
+                result.msgDurations.push(new Date().getTime() - t1);
+                resolve();
+            }, 10000)
+            try {
+                await driver.sendDirectToUser(msg, receiver)
+                result.msgSuccess += 1;
+            } catch (err) {
+                result.msgFail += 1;
+                result.info.push(err);
+                process.stderr.write(err.message + '\n');
+            }
             result.msgDurations.push(new Date().getTime() - t1);
+            resolve();
         });
     };
 
