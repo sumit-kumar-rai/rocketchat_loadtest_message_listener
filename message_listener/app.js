@@ -37,25 +37,24 @@ async function runSender(result, serverUrl, username, receiver, msgcnt, msgInter
         const t1 = new Date().getTime();
         const msg = JSON.stringify({type: 'ping', ts: (new Date()).getTime(), msg: payload})
         result.msgTotal += 1;
-
-        await new Promise(resolve => {
-            setTimeout(() => {
-                result.msgFail += 1;
-                result.msgDurations.push(new Date().getTime() - t1);
-                resolve();
-            }, 10000);
-            driver.sendDirectToUser(msg, receiver).then(() => {
+        try {
+            const rid = await driver.getDirectMessageRoomId(msg, receiver)
+            process.stderr.write(rid + '\n');
+            // if (!Array.isArray(payload)) {
+            const resp = await driver.sendMessage(driver.prepareMessage(msg, rid))
+            process.stderr.write(rid + ' | ' + resp + '\n');
+            if (resp) { 
                 result.msgSuccess += 1;
-            }).catch((err) => {
+            } else {
                 result.msgFail += 1;
-                result.info.push(err);
-                process.stderr.write(err.message + '\n');
-            }).finally(() => {
-                result.msgDurations.push(new Date().getTime() - t1);
-                resolve();
-            });
-        });
-    };
+            }
+        } catch (err) {
+            result.msgFail += 1;
+            result.info.push(err);
+            process.stderr.write(err.message + '\n');
+        }
+        result.msgDurations.push(new Date().getTime() - t1);
+    }
 
     const arr = [];
     for (var i = 1; i < msgcnt + 1; i++) {
@@ -161,7 +160,7 @@ async function runReceiver(result, serverUrl, username, sender) {
 
     // user data offset
     const offset = parseInt(args[0]);
-    const initialDelay = 3000;
+    const initialDelay = user;
 
     // driver cannot handle trailing slash
     var serverUrl = opts['server-url'];
