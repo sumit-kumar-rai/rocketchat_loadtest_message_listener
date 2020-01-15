@@ -43,17 +43,17 @@ async function runSender(result, serverUrl, username, receiver, msgcnt, msgInter
                 result.msgFail += 1;
                 result.msgDurations.push(new Date().getTime() - t1);
                 resolve();
-            }, 10000)
-            try {
-                await driver.sendDirectToUser(msg, receiver)
+            }, 10000);
+            driver.sendDirectToUser(msg, receiver).then(() => {
                 result.msgSuccess += 1;
-            } catch (err) {
+            }).catch((err) => {
                 result.msgFail += 1;
                 result.info.push(err);
                 process.stderr.write(err.message + '\n');
-            }
-            result.msgDurations.push(new Date().getTime() - t1);
-            resolve();
+            }).finally(() => {
+                result.msgDurations.push(new Date().getTime() - t1);
+                resolve();
+            });
         });
     };
 
